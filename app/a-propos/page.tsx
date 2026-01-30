@@ -1,23 +1,18 @@
-export default function AProposPage() {
-return (
-<main className="max-w-4xl mx-auto px-6 py-16 space-y-6">
-<h1 className="text-3xl font-bold">À propos d’Artisans 03</h1>
+// app/a-propos/page.tsx
+import type { Metadata } from "next";
+// Si tu as l’alias "@", garde-le. Sinon, utilise un import relatif: "../../components/AboutSection"
+import AboutSection from "@/components/AboutSection";
 
-<p>
-Artisans 03 est une plateforme française dédiée à la mise en relation
-entre artisans qualifiés et particuliers à la recherche de services
-fiables et de proximité.
-</p>
+export const metadata: Metadata = {
+  title: "À propos — TonSite",
+  description: "En savoir plus sur notre équipe, notre mission et notre produit.",
+};
 
-<p>
-Notre objectif est de simplifier les échanges, de valoriser le savoir-faire
-local et de créer un environnement de confiance pour tous les utilisateurs.
-</p>
-
-<p>
-Artisans 03 agit comme un intermédiaire technique et communautaire,
-sans intervenir dans la réalisation des prestations.
-</p>
-</main>
-);
+export default function Page() {
+  return (
+    <div className="max-w-3xl mx-auto py-10 px-5">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">À propos</h1>
+      <AboutSection />
+    </div>
+  );
 }
