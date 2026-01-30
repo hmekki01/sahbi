@@ -22,7 +22,7 @@ type site_users = {
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
