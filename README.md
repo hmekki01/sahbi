@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛠️ Artisans de Confiance - Allier (03)
 
-## Getting Started
+**Le SaaS de mise en relation locale pour la communauté musulmane arabophone dans l'Allier.**
 
-First, run the development server:
+Ce projet est une plateforme moderne permettant aux particuliers de trouver des artisans locaux (Vichy, Moulins, Montluçon) validés, parlant français et arabe, sans intermédiaire.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Tech Stack (Architecture MVP)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Le projet utilise les technologies les plus récentes pour garantir performance, sécurité et scalabilité :
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* **Frontend :** [Next.js 14+](https://nextjs.org/) (App Router) avec **Tailwind CSS** pour le design.
+* **Animations :** [Framer Motion](https://www.framer.com/motion/) pour une UX fluide.
+* **Backend & Auth :** [Supabase](https://supabase.com/) (PostgreSQL + Row Level Security).
+* **Paiements :** [Stripe](https://stripe.com/) (Abonnements + Billing Portal).
+* **Emails :** [Resend](https://resend.com/) pour les notifications et bienvenues.
+* **Hébergement :** [Vercel](https://vercel.com/).
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🏗️ Structure de la Base de Données
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Le schéma est conçu pour séparer l'authentification sécurisée des données publiques :
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `profiles` : Table principale (ID, nom, métier, ville, langues, statut Stripe, vérification).
+- `storage/avatars` : Bucket public pour les photos de profil et logos.
+- `webhooks` : Automatisation de la visibilité basée sur le statut de paiement Stripe.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Installation & Configuration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Cloner le projet :**
+  ```bash
+  git clone [https://github.com/votre-compte/artisans-allier.git](https://github.com/votre-compte/artisans-allier.git)
+  cd artisans-allier

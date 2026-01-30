@@ -1,0 +1,189 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Carte interactive du site</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b1220; --fg:#e9eef6; --muted:#9fb0c7; --accent:#59c1ff; --node:#1b2a4a; --nodeHover:#23406b; }
+    html,body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial; }
+    header { padding:16px 20px; border-bottom:1px solid #1f2b44; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+    h1 { font-size:18px; margin:0; }
+    .legend { color:var(--muted); font-size:14px }
+    .container { height:calc(100% - 64px); }
+    svg { width:100%; height:100%; cursor:grab; }
+    .link { fill:none; stroke:#2c3e66; stroke-width:2px; }
+    .node rect { fill:var(--node); stroke:#385d9a; stroke-width:1px; rx:8; ry:8; }
+    .node:hover rect { fill:var(--nodeHover); }
+    .node text { font-size:14px; fill:var(--fg); pointer-events:none; }
+    .badge { font-size:11px; fill:#111; }
+    .btn { background:#17335e; color:#e8f1ff; border:1px solid #2a528e; padding:8px 10px; border-radius:8px; cursor:pointer; }
+    .btn:hover { background:#1b417b; }
+    .toolbar { display:flex; gap:8px; margin-left:auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Carte interactive — Annuaire artisans 03</h1>
+    <div class="legend">Clic : ouvre la page • Double‑clic : plier/déplier • Zoom : molette/trackpad • Drag : déplacer</div>
+    <div class="toolbar">
+      <button class="btn" id="expandAll">Tout déplier</button>
+      <button class="btn" id="collapseAll">Tout plier</button>
+      <button class="btn" id="resetView">Réinitialiser la vue</button>
+    </div>
+  </header>
+  <div class="container">
+    <svg id="canvas"></svg>
+  </div>
+
+  <script type="module">
+    // --- Données du site : édite/ajoute des pages ici ---
+    const BASE = 'http://localhost:3000';
+    const DATA = {
+      name: 'Accueil',
+      url: BASE + '/',
+      children: [
+        {
+          name: 'Recherche',
+          url: BASE + '/recherche',
+          children: [
+            { name: 'Résultats', url: BASE + '/recherche?q=electricien', children: [
+              { name: 'Fiche artisan', url: BASE + '/artisans/ben-athome', children: [
+                { name: 'Action : Appeler (tel:)', url: 'tel:+33XXXXXXXXX' },
+                { name: 'Action : WhatsApp', url: 'https://wa.me/33XXXXXXXXX' },
+                { name: 'Langue : العربية', url: BASE + '/ar/artisans/ben-athome' }
+              ]}
+            ] }
+          ]
+        },
+        {
+          name: 'Je suis artisan',
+          url: BASE + '/inscription',
+          children: [
+            { name: 'Formulaire profil', url: BASE + '/inscription/profil' },
+            { name: 'Validation / Vérification', url: BASE + '/inscription/verification' }
+          ]
+        },
+        {
+          name: 'Aide',
+          url: BASE + '/aide',
+          children: [
+            { name: 'FAQ', url: BASE + '/aide/faq' },
+            { name: 'Signaler un contenu', url: BASE + '/aide/signaler' },
+            { name: 'Sécurité', url: BASE + '/aide/securite' }
+          ]
+        },
+        {
+          name: 'À propos / Ressources',
+          url: BASE + '/a-propos',
+          children: [
+            { name: 'Fonctionnement', url: BASE + '/fonctionnement' },
+            { name: 'Ressources', url: BASE + '/ressources' },
+            { name: 'Charte de la communauté', url: BASE + '/charte' }
+          ]
+        },
+        {
+          name: 'Légal',
+          url: BASE + '/legal',
+          children: [
+            { name: 'Mentions légales', url: BASE + '/mentions-legales' },
+            { name: 'Politique de confidentialité', url: BASE + '/politique-confidentialite' },
+            { name: 'Politique de cookies', url: BASE + '/cookies' },
+            { name: 'Gérer les cookies', url: BASE + '/cookies/preferences' }
+          ]
+        }
+      ]
+    };
+
+    // --- D3 collapsible tree (sans dépendance externe) ---
+    // petit loader dynamique de D3 via ESM CDN (fonctionne hors build)
+    const d3 = await import('https://cdn.jsdelivr.net/npm/d3@7/+esm');
+
+    const svg = d3.select('#canvas');
+    const gZoom = svg.append('g');
+    const gLinks = gZoom.append('g').attr('class','links');
+    const gNodes = gZoom.append('g').attr('class','nodes');
+    const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+
+    const root = d3.hierarchy(DATA, d => d.children);
+    root.x0 = 0; root.y0 = 0;
+    root.children?.forEach(collapse);
+
+    const treeLayout = d3.tree().nodeSize([60, 220]);
+
+    const zoom = d3.zoom().scaleExtent([0.4, 2.5]).on('zoom', (e)=> gZoom.attr('transform', e.transform));
+    svg.call(zoom);
+
+    function collapse(d){ 
+      if(d.children){ d._children = d.children; d._children.forEach(collapse); d.children = null; } 
+    }
+    function expand(d){
+      if(d._children){ d.children = d._children; d._children = null; }
+      d.children?.forEach(expand);
+    }
+
+    function update(source) {
+      treeLayout(root);
+      // normalisation: profondeur -> y
+      root.each(d => d.y = d.depth * 220 + margin.left);
+
+      // LINKS
+      const link = gLinks.selectAll('path.link').data(root.links(), d => d.target.data.name + '-' + d.source.data.name);
+      link.enter().append('path')
+        .attr('class','link')
+        .attr('d', d => elbow({ source: source, target: source }))
+        .merge(link)
+        .transition().duration(300)
+        .attr('d', elbow);
+      link.exit().transition().duration(300).remove();
+
+      // NODES
+      const node = gNodes.selectAll('g.node').data(root.descendants(), d=> d.data.name);
+      const nodeEnter = node.enter().append('g').attr('class','node')
+        .attr('transform', _ => `translate(${source.y0||0},${source.x0||0})`)
+        .on('dblclick', (_,d)=> { // open/close
+          if (d.children) { d._children = d.children; d.children = null; }
+          else { d.children = d._children; d._children = null; }
+          update(d);
+        })
+        .on('click', (_,d)=> { if (d.data.url) window.open(d.data.url, '_blank', 'noopener'); });
+
+      const box = nodeEnter.append('rect')
+        .attr('width', 200).attr('height', 42)
+        .attr('x', -100).attr('y', -21);
+
+      nodeEnter.append('text')
+        .attr('dy', '0.35em').attr('text-anchor','middle')
+        .text(d => d.data.name);
+
+      const nodeUpdate = nodeEnter.merge(node);
+      nodeUpdate.transition().duration(300).attr('transform', d=> `translate(${d.y},${d.x})`);
+
+      const nodeExit = node.exit().transition().duration(300)
+        .attr('transform', _ => `translate(${source.y},${source.x})`).remove();
+
+      // mémorise positions
+      root.each(d => { d.x0 = d.x; d.y0 = d.y; });
+    }
+
+    function elbow(d){
+      const sx = d.source.x, sy = d.source.y;
+      const tx = d.target.x, ty = d.target.y;
+      const mx = (sy + ty) / 2;
+      return `M ${sy},${sx} C ${mx},${sx} ${mx},${tx} ${ty},${tx}`;
+    }
+
+    // boutons
+    document.getElementById('expandAll').onclick = ()=> { expand(root); update(root); };
+    document.getElementById('collapseAll').onclick = ()=> { root.children?.forEach(collapse); update(root); };
+    document.getElementById('resetView').onclick = ()=> { svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity); };
+
+    // init
+    update(root);
+    // focus initial
+    svg.call(zoom.transform, d3.zoomIdentity.translate(80, 100).scale(0.9));
+    
+  </script>
+</body>
+</html>
