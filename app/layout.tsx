@@ -2,19 +2,20 @@
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from "@/components/Footer";
+import type { ReactNode } from "react";
 
 import type { Metadata } from 'next';
 
 
 
 export const metadata: Metadata = {
-  title: 'Annuaire artisans 03',
+  title: 'Sahbi',
   description: 'Plateforme bilingue FR/AR',
 };
 
 
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
       <head>
